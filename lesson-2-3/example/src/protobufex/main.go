@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/golang/protobuf/proto"
 )
 
 func main() {
 	p := &Person{
 		Age:         27,
-		Name:        "Ivan",
-		Surname:     "Remen",
+		Name:        "Rob",
+		Surname:     "Pike",
 		ChildrenAge: make(map[string]uint32),
 	}
 	p.ChildrenAge["Maria"] = 2
@@ -17,11 +18,11 @@ func main() {
 
 	marshaled, _ := proto.Marshal(p)
 
-	fmt.Printf("marshaled len %d message = %s\n", len(marshaled), string(marshaled))
+	fmt.Printf("Length of marshaled: %v\n", len(marshaled))
+	fmt.Printf("Binary: %v\n", string(marshaled))
 
 	p2 := &Person{}
 	proto.Unmarshal(marshaled, p2)
 
-	fmt.Printf("Unmarshaled %v", p2)
-
+	fmt.Printf("Unmarshaled %v\n", p2)
 }

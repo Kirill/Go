@@ -7,18 +7,17 @@ import (
 
 type Person struct {
 	Name string
-	age  int
+	Age  int
 	Job  struct {
 		Department string
 		Title      string
 	}
 }
 
-
 func main() {
 	p1 := &Person{
 		Name: "Vasya",
-		age: 36,
+		Age:  36,
 		Job: struct {
 			Department string
 			Title      string
@@ -34,6 +33,5 @@ func main() {
 
 	var p2 Person
 	json.Unmarshal(j, &p2)
-	fmt.Printf("p2: %v\n", p2)
-
+	fmt.Printf("p2: %+v\n", p2)
 }

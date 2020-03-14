@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func main()  {
+func main() {
 
 	data := `
 		<Person id="34">
@@ -26,7 +26,7 @@ func main()  {
 			<State>Easter Island</State>
 		</Person>
 		<Person id="35">
-			<FullName>Ivan Remen</FullName>
+			<FullName>Rob Pike</FullName>
 			<Company>Example Inc.</Company>
 			<Email where="home">
 				<Addr>gre@example.com</Addr>
@@ -42,7 +42,7 @@ func main()  {
 			<State>Easter Island</State>
 		</Person>
 		<Person id="35">
-			<FullName>Dmitry Smal</FullName>
+			<FullName>Russ Cox</FullName>
 			<Company>Example Inc.</Company>
 			<Email where="home">
 				<Addr>gre@example.com</Addr>
@@ -80,6 +80,7 @@ func main()  {
 			inFullName = se.Name.Local == "FullName"
 		case xml.EndElement:
 			fmt.Printf("End element: %v\n", se.Name.Local)
+			inFullName = false
 		case xml.Name:
 			fmt.Printf("Name element: %v\n", se.Local)
 		case xml.CharData:
@@ -94,6 +95,5 @@ func main()  {
 	}
 
 	fmt.Printf("All names: %v", names)
-
 
 }

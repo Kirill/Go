@@ -43,5 +43,5 @@ func main() {
 		</Person>
 	`
 	xml.Unmarshal([]byte(data), &v)
-	fmt.Printf("%v\n", v)
+	fmt.Printf("%+v\n", v)
 }

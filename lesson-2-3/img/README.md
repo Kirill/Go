@@ -19,6 +19,7 @@ background-size: 130%
 
 ---
 
+
 class: white
 background-image: url(img/message.svg)
 .top.icon[![otus main](img/logo.png)]
@@ -39,103 +40,133 @@ background-image: url(img/message.svg)
 
 # О чем будем говорить
 
-### 1. Зачем нужна сериализация/десериализация.
-### 2. Текстовая сериализация (json, xml).
-### 3. Бинарная сериализация (msgpack, protobuf).
+### 1. Примитивы синхронизации (WaitGroup, Once, Mutex, Cond)
+### 2. Модель памяти в Go
+### 3. Race-детектор
 
 ---
 
-# Настройка на занятие
-
-.left-text[
-Пожалуйста, пройдите небольшой тест.
-<br><br>
-Возможно, вы уже многое знаете про возможности сериализации в Go.
-<br><br>
-Ссылка в чате
-]
+# Цель занятия
 
 .right-image[
-![](img/gopher9.png)
+![](tmp/gopher.png)
 ]
+
+#
+- Изучить возможности кодирования бинарных данных в текстовой форме
+- Научиться использовать стандартную библиотеку для кодирования в формате base64
+- Изучить форматы JSON, XML, YAML.
+- Изучить подходы к парсингу XML.
+- Научиться парсить JSON через стандартную библиотеку
+- Изучить библиотеку easyjson
+- Изучить библиотеки для работы с MsgPack и Protobuf
 
 ---
 
-# Зачем?
+# А зачем?
+
+.right-image[
+![](tmp/gopher.png)
+]
 
 ### Зачем кодировать бинарные данные в текстовый вид?
 
 ---
 
-# base64
+# Кодировка base64
+
 
 ```
-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
-```
-
-```
-MS4g0JfQsNGH0LXQvCDQvdGD0LbQvdCwINGB0LXRgNC40LDQu9C40LfQsNGG0LjRjy/QtNC
-10YHQtdGA0LjQsNC70LjQt9Cw0YbQuNGPLgoyLiDQotC10LrRgdGC0L7QstCw0Y8g0YHQtd
-GA0LjQsNC70LjQt9Cw0YbQuNGPIChqc29uLCB4bWwpLgozLiDQkdC40L3QsNGA0L3QsNGPI
-NGB0LXRgNC40LDQu9C40LfQsNGG0LjRjyAobXNncGFjaywgcHJvdG9idWYpLg==
+TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0
+aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1
+c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0
+aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdl
+LCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=
 ```
 
 Избыточность = 1/3
 
 ---
 
-# base64
+# Работа с base64
 ```
+package main
+
+import b64 "encoding/base64"
+import "fmt"
+
 func main() {
+
     data := "Hello world"
 
-    sEnc := base64.StdEncoding.EncodeToString([]byte(data))
+    sEnc := b64.StdEncoding.EncodeToString([]byte(data))
     fmt.Println(sEnc)
 
-    sDec, _ := base64.StdEncoding.DecodeString(sEnc)
+    sDec, _ := b64.StdEncoding.DecodeString(sEnc)
     fmt.Println(string(sDec))
+    fmt.Println()
+
+    uEnc := b64.URLEncoding.EncodeToString([]byte(data))
+    fmt.Println(uEnc)
+    uDec, _ := b64.URLEncoding.DecodeString(uEnc)
+    fmt.Println(string(uDec))
 }
 ```
-
-https://play.golang.org/p/eoIUTskNcMf
+https://play.golang.org/p/4oFM2M2Sirq
 
 ---
 
-# base64: поточная работа
+# Работа с base64
 
-Кодирование
+А какие недостатки?
+
+---
+
+# Поточная работа с base64 (кодирование)
+
 ```
+package main
+
+import (
+	"encoding/base64"
+	"os"
+)
+
 func main() {
-	input := []byte("otus")
+	input := []byte("foo\x00bar")
 	encoder := base64.NewEncoder(base64.StdEncoding, os.Stdout)
 	encoder.Write(input)
-	encoder.Close() // <=== Зачем?
+	// Must close the encoder when finished to flush any partial blocks.
+	// If you comment out the following line, the last partial block "r"
+	// won't be encoded.
+	encoder.Close()
 }
 ```
-<br>
-Декодирование
+https://play.golang.org/p/GwrvXsSzeN7
+
+---
+
+# Поточная работа с base64 (декодирование)
+
 ```
+package main
+
+import (
+	"encoding/base64"
+	"os"
+	"io"
+	"strings"
+)
+
 func main() {
-	input := "b3R1cw=="
+	input := "Zm9vAGJhcg=="
 	r := base64.NewDecoder(base64.StdEncoding, strings.NewReader(input))
-	io.Copy(os.Stdout, r)
+        io.Copy(os.Stdout, r)
 }
 ```
 
----
+https://play.golang.org/p/uxmmi_OX42i
 
-# base64: недостатки
-
-Какие недостатки?
-
----
-
-# base64: недостатки
-
-```
-Std: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-URL: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-```
 
 ---
 
@@ -240,13 +271,13 @@ widget:
 
 ---
 
-# JSON: структуры
+# Работа с JSON (базовые возможности)
 
 ```
 func main() {
 	p1 := &Person{
 		Name: "Vasya",
-		Age: 36,
+		age: 36,
 		Job: struct {
 			Department string
 			Title      string
@@ -262,15 +293,16 @@ func main() {
 
 	var p2 Person
 	json.Unmarshal(j, &p2)
-	fmt.Printf("p2: %+v\n", p2)
+	fmt.Printf("p2: %v\n", p2)
+
 }
 ```
 
-https://play.golang.org/p/c6EmkEXVl1_a
+https://play.golang.org/p/p9uRcgPUX8B (полная версия)
 
 ---
 
-# JSON: interface{}
+# Работа с JSON через interface{}
 
 ```
 package main
@@ -292,12 +324,11 @@ func main() {
 	fmt.Printf("name=%s\n", person["Name"])
 }
 ```
-
-https://play.golang.org/p/_4tBO2EgDVE
+https://play.golang.org/p/mGVtP-hSQjq
 
 ---
 
-# JSON: тэги
+# Работа с тегами пакета json
 
 ```
 type Person struct {
@@ -311,15 +342,13 @@ type Person struct {
 }
 ```
 
----
 
-# JSON: easyjson
+https://play.golang.org/p/RxcV-MjmgAm (полная версия)
 
-https://github.com/mailru/easyjson
 
 ---
 
-# XML
+# Кодирование в xml
 
 ```
 type Address struct {
@@ -338,14 +367,38 @@ type Person struct {
 }
 ```
 
-https://play.golang.org/p/QbfwL44vjJU (сериализация)
-
-
-https://play.golang.org/p/FekJkpuj9KT (десериализация)
+https://play.golang.org/p/QbfwL44vjJU (полная версия)
 
 ---
 
-# XML: SAX Parser
+# Декодирование из xml
+
+```
+type Address struct {
+	City, State string
+}
+type Person struct {
+	XMLName   xml.Name `xml:"person"`
+	Id        int      `xml:"id,attr"`
+	FirstName string   `xml:"name>first"`
+	LastName  string   `xml:"name>last"`
+	Age       int      `xml:"age"`
+	Height    float32  `xml:"height,omitempty"`
+	Married   bool
+	Address
+	Comment string `xml:",comment"`
+}
+```
+https://play.golang.org/p/FekJkpuj9KT (полная версия)
+
+---
+
+# XML
+
+## А что если данные не помещаются в оперативную память?
+
+---
+# SAX Parser
 
 ```
 for {
@@ -358,7 +411,6 @@ for {
 			inFullName = se.Name.Local == "FullName"
 		case xml.EndElement:
 			fmt.Printf("End element: %v\n", se.Name.Local)
-			inFullName = false
 		case xml.CharData:
 			fmt.Printf("Data element: %v\n", string(se))
 			if inFullName {
@@ -371,7 +423,7 @@ for {
 	}
 ```
 
-https://play.golang.org/p/5qU9TYTo-G9
+https://play.golang.org/p/cuSIsVyZpD-
 
 ---
 
@@ -379,19 +431,19 @@ https://play.golang.org/p/5qU9TYTo-G9
 
 ## Что это такое?
 ## Какие плюсы?
-## Какие минусы?
+## А какие минусы?
 
 ---
 
 # Бинарные сериализаторы
 
-## gob
-## msgpack
-## protobuf
+- gob
+- msgpack
+- protobuf
 
 ---
 
-# msgpack
+# msgpack (github.com/vmihailenco/msgpack)
 
 ```
 type Person struct {
@@ -401,8 +453,8 @@ type Person struct {
 	ChildrenAge map[string]uint8
 }
 func main() {
-	p := Person{Name:  "Rob",
-		Surname: "Pike", Age: 27,
+	p := Person{Name:  "Ivan",
+		Surname: "Remen", Age: 27,
 	}
 	p.ChildrenAge = make(map[string]uint8)
 	p.ChildrenAge["Alex"] = 5
@@ -410,20 +462,19 @@ func main() {
 
 	marshaled, _ := msgpack.Marshal(&p)
 
-	fmt.Printf("Length of marshaled: %v\n", len(marshaled))
-	fmt.Printf("Binary: %v\n", string(marshaled))
+	fmt.Printf("Length of marshaled: %v
+	   IMPL: %v\n", len(marshaled), string(marshaled))
 
 	p2 := &Person{}
 	msgpack.Unmarshal(marshaled, p2)
-	fmt.Printf("Unmarshled: %+v\n", p2)
+	fmt.Printf("Unmarshled: %v\n", p2)
 }
 ```
-
-https://play.golang.org/p/VrLsTxv68V_O
+https://play.golang.org/p/4pYvh-Qa_wg
 
 ---
 
-# protobuf
+#protobuf (proto-файл)
 
 ```
 syntax = "proto3";
@@ -439,18 +490,25 @@ message Person {
 }
 ```
 
-Кодогенерация: `protoc --go_out=. *.proto`.
+Сборка: protoc --go_out=. *.proto
 
 ---
 
-# protobuf
+#Работа с protobuf
 
 ```
+package main
+
+import (
+	"fmt"
+	"github.com/golang/protobuf/proto"
+)
+
 func main() {
 	p := &Person{
 		Age:         27,
-		Name:        "Rob",
-		Surname:     "Pike",
+		Name:        "Ivan",
+		Surname:     "Remen",
 		ChildrenAge: make(map[string]uint32),
 	}
 	p.ChildrenAge["Maria"] = 2
@@ -458,48 +516,56 @@ func main() {
 
 	marshaled, _ := proto.Marshal(p)
 
-	fmt.Printf("Length of marshaled: %v\n", len(marshaled))
-	fmt.Printf("Binary: %v\n", string(marshaled))
+	fmt.Printf("marshaled len %d message = %s\n", len(marshaled), string(marshaled))
 
 	p2 := &Person{}
 	proto.Unmarshal(marshaled, p2)
 
-	fmt.Printf("Unmarshaled %v\n", p2)
+	fmt.Printf("Unmarshaled %v", p2)
+
 }
 ```
 
 ---
 
-# Повторение
+# Практика
 
-.left-text[
-Давайте проверим, что вы узнали за этот урок, а над чем стоит еще поработать.
-<br><br>
-Ссылка в чате
-]
+### Изучаем easyjson
 
-.right-image[
-![](img/gopher9.png)
-]
+---
+
+# Тест
+
+https://forms.gle/SiDmYTPUU5La3rA88
+
+---
+
+
+# На занятии
+
+- Изучили возможности кодирования бинарных данных в текстовой форме
+- Научились использовать стандартную библиотеку для кодирования в формате base64
+- Изучили форматы JSON, XML, YAML.
+- Изучили подходы к парсингу XML.
+- Научились использовать стандартную библиотеку для кодирования в формате base64
+- Научиться парсить JSON через стандартную библиотеку
+- Изучили библиотеку easyjson
+- Изучили библиотеки для работы с MsgPack и Protobuf
+
+---
+
+## Вопросы?
 
 ---
 
 # Опрос
 
-.left-text[
-Заполните пожалуйста опрос
-<br><br>
-Ссылка в чате.
-]
-
-.right-image[
-![](img/gopher.png)
-]
+Не заполните заполнить опрос. Ссылка на опрос будет в слаке.
 
 ---
 
 class: white
-background-image: url(img/message.svg)
-.top.icon[![otus main](img/logo.png)]
+background-image: url(tmp/title.svg)
+.top.icon[![otus main](https://drive.google.com/uc?id=18Jw9bQvL3KHfhGWNjqyQ3ihR3fV3tmk8)]
 
 # Спасибо за внимание!

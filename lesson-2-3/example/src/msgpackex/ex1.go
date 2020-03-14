@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/vmihailenco/msgpack"
 )
 
@@ -14,9 +15,9 @@ type Person struct {
 
 func main() {
 	p := Person{
-		Name:  "Ivan",
-		Surname: "Remen",
-		Age:   27,
+		Name:    "Rob",
+		Surname: "Pike",
+		Age:     27,
 	}
 	p.ChildrenAge = make(map[string]uint32)
 	p.ChildrenAge["Alex"] = 5
@@ -24,9 +25,10 @@ func main() {
 
 	marshaled, _ := msgpack.Marshal(&p)
 
-	fmt.Printf("Length of marshaled: %v IMPL: %v\n", len(marshaled), string(marshaled))
+	fmt.Printf("Length of marshaled: %v\n", len(marshaled))
+	fmt.Printf("Binary: %v\n", string(marshaled))
 
 	p2 := &Person{}
 	msgpack.Unmarshal(marshaled, p2)
-	fmt.Printf("Unmarshled: %v\n", p2)
+	fmt.Printf("Unmarshled: %+v\n", p2)
 }

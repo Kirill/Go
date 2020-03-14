@@ -35,6 +35,6 @@ func main() {
 
 	var p2 Person
 	json.Unmarshal(j, &p2)
-	fmt.Printf("p2: %v\n", p2)
+	fmt.Printf("p2: %+v\n", p2)
 
 }

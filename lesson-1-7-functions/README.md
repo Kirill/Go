@@ -31,10 +31,8 @@ background-image: url(img/message.svg)
 
 # О чем будем говорить
 
-# ДОРАБОТАТЬ
-
-- области видимости
-- виды функций и зачем они нужны
+- ### области видимости
+- ### виды функций и зачем они нужны
 
 ---
 
@@ -43,7 +41,7 @@ background-image: url(img/message.svg)
 .left-text[
 Пожалуйста, пройдите небольшой тест.
 <br><br>
-Возможно, вы уже многое знаете про возможности сериализации в Go.
+Возможно, вы уже многое знаете про функции в Go.
 <br><br>
 Ссылка в чате
 ]
@@ -68,7 +66,7 @@ func main() {
 		a := 3 // <-- уровень пустого блока
 		fmt.Println("3: ", a)
 	}
-	fmt.Println("4: ", a)
+	fmt.Println("4: ", a) // <-- ???
 
 	f()
 }
@@ -79,16 +77,6 @@ func f() {
 ```
 
 https://play.golang.org/p/NcjESEYxQAN
-
----
-
-<br>
-Блок (block) - это, возможно пустая, последовательность объявлений (declarations) и операторов (statements) в соответствующих фигурных скобках.
-<br>
-	- universe block - весь код проекта
-	- package block - весь код пакета
-	- file block - исходный код в файле
-	- local block - просто {}
 
 ---
 
@@ -121,7 +109,7 @@ default:
 
 ---
 
-# Область видимости
+# Области видимости
 
 - Всеобщий блок (universe block) - видят все.
 
@@ -146,7 +134,7 @@ const studentsCount = 10
 
 ---
 
-# Область видимости
+# Области видимости
 
 Импорты в блоке файла (file block).
 
@@ -176,7 +164,7 @@ func f() {
 
 ---
 
-# Область видимости
+# Области видимости
 
 ```
 func main() {
@@ -327,6 +315,10 @@ https://play.golang.org/p/3Ta6LGb1-tN
 
 # Анонимные функции: зачем?
 
+---
+
+# Анонимные функции: зачем?
+
 ### Запуск горутины
 
 ```
@@ -449,7 +441,7 @@ https://play.golang.org/p/LCBMgmREhjE
 
 ---
 
-# Функции: несколько возвращаемых значений
+# Функции: именованные возвращаемые значения
 
 ```
 func sum(a, b int) (s int) {
@@ -460,7 +452,7 @@ func sum(a, b int) (s int) {
 
 ---
 
-# Функции: несколько возвращаемых значений
+# Функции: именованные возвращаемые значения
 
 ```
 func doSmth() (s int, err error) {
@@ -564,6 +556,36 @@ func SetPages(b *Book, pages int) {
 	b.pages = pages
 }
 ```
+
+---
+
+# Методы и функции
+
+```
+type Concater string
+
+func (c Concater) do(i int) string {
+	return fmt.Sprintf("%s: %d", c, i)
+}
+```
+
+```
+c := Concater("test")
+fmt.Println(c.do(0)) // <---- Explicit call
+
+f1 := Concater.do // <------- Method expressions
+fmt.Println(f1(c, 1))
+
+f2 := c.do // <-------------- Method value
+fmt.Println(f2(2))
+
+f3 := func(i int) string {
+	return c.do(i) // <------ Closure
+}
+fmt.Println(f3(3))
+```
+
+https://play.golang.org/p/ggUP7aFZ5EG
 
 ---
 

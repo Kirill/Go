@@ -29,7 +29,15 @@ background-image: url(img/message.svg)
 
 ---
 
-# План занятия
+# Как проходит занятие
+
+* ### Активно участвуем - задаем вопросы.
+* ### Чат вижу - могу ответить не сразу.
+* ### После занятия - оффтопик, ответы на любые вопросы.
+
+---
+
+# О чем будем говорить
 
 .big-list[
 * Обработка аргументов командной строки: flag, pflag, cobra
@@ -44,7 +52,7 @@ background-image: url(img/message.svg)
 
 # Цель занятия
 
-## Узнать, какие средства взаимодействия с ОС есть в Go.
+## Узнать, какие средства <br> взаимодействия с ОС есть в Go.
 
 ---
 
@@ -129,7 +137,9 @@ https://github.com/spf13/cobra/
 # cobra: пример
 
 ```
-$ cobra init git --pkg-name .
+$ cobra init git --pkg-name github.com/otus/git
+$ cd git
+$ gomod init github.com/otus/git
 $ cobra add commit
 ```
 
@@ -315,20 +325,14 @@ _ = wcCmd.Wait()
 # Обработка сигналов
 
 ```
-func signalHandler(c <-chan os.Signal) {
-	for s := range c {
-		fmt.Println("Got signal:", s)
-	}
-}
-
 func main() {
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL)
 	signal.Ignore(syscall.SIGTERM)
 
-	go signalHandler(c)
-
-  // business logic
+	for s := range c {
+		fmt.Println("Got signal:", s)
+	}
 }
 ```
 
@@ -403,7 +407,7 @@ https://github.com/dchest/safefile
 ]
 
 .right-image[
-![](img/gopher7.png)
+![](img/gopher.png)
 ]
 
 ---
@@ -413,7 +417,8 @@ https://github.com/dchest/safefile
 Реализовать утилиту envdir на Go.
 <br><br>
 
-Эта утилита позволяет запускать программы получая переменные окружения из определенной директории.
+Она позволяет запускать программы получая переменные окружения из определенной директории.
+<br><br>
 Пример использования:
 
 ```
@@ -425,6 +430,8 @@ go-envdir /path/to/env/dir some_prog
 * `B_VAR` с содержимым `another_val`
 
 То программа `some_prog` должать быть запущена с переменными окружения `A_ENV=123 B_VAR=another_val`
+
+https://github.com/OtusGolang/home_work/tree/master/hw08_envdir_tool
 
 ---
 

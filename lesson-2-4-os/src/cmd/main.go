@@ -10,7 +10,7 @@ func main() {
 	cmd := exec.Command("../env/env")
 	cmd.Env = append(os.Environ(),
 		"USER=petya",
-		"CITY=SPb",
+		"CITY=Msk",
 	)
 	cmd.Stdout = os.Stdout
 
